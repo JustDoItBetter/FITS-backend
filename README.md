@@ -41,7 +41,7 @@ Content-Type: multipart/form-data
 file: <parquet-file>
 ```
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 ---
 
@@ -52,7 +52,7 @@ GET /api/v1/sign_requests
 
 **Response:** Parquet file mit pending sign requests
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 ---
 
@@ -64,7 +64,7 @@ Content-Type: multipart/form-data
 file: <parquet-file>
 ```
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 ---
 
@@ -83,7 +83,7 @@ email = "max@example.com"
 teacher_id = "teacher-uuid"
 ```
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 #### Update Student
 ```http
@@ -95,7 +95,7 @@ uuid = "550e8400-e29b-41d4-a716-446655440000"
 first_name = "Moritz"
 ```
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 #### Delete Student
 ```http
@@ -103,7 +103,7 @@ DELETE /api/v1/student/:uuid
 Authorization: Bearer <deletion_secret>
 ```
 
-**Status:** 🚧 Not Implemented
+**Status:**  Not Implemented
 
 ---
 
