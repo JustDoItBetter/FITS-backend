@@ -1,0 +1,53 @@
+# FITS Backend Configuration (Example)
+# ==================================
+# PRODUCTION: Copy this file to config.toml and change all secrets!
+# DEVELOPMENT: This file can be used as-is for local development
+
+[server]
+port = 8080
+host = "0.0.0.0"
+read_timeout = "30s"
+write_timeout = "30s"
+# Comma-separated CORS origins. Use "*" for all (dev only), or specify: "http://localhost:3000,https://example.com"
+# PRODUCTION: Change this to your actual frontend domains!
+allowed_origins = "*"
+# Rate limit: max requests per minute per IP. 0 = unlimited (not recommended for production)
+rate_limit = 100
+
+[secrets]
+# PRODUCTION: Generate strong random secrets (32+ characters)!
+# Example: openssl rand -base64 32
+metrics_secret = "CHANGE-THIS-IN-PRODUCTION-use-strong-random-secret"
+registration_secret = "CHANGE-THIS-IN-PRODUCTION-use-strong-random-secret"
+deletion_secret = "CHANGE-THIS-IN-PRODUCTION-use-strong-random-secret"
+update_secret = "CHANGE-THIS-IN-PRODUCTION-use-strong-random-secret"
+
+[storage]
+upload_dir = "./uploads"
+max_file_size = 104857600
+
+[logging]
+level = "info"
+format = "json"
+
+[database]
+host = "localhost"
+port = 5432
+user = "fits_user"
+# PRODUCTION: Use strong password and store in environment variable!
+password = "CHANGE-THIS-IN-PRODUCTION"
+database = "fits_db"
+# PRODUCTION: Enable SSL in production!
+ssl_mode = "disable"
+max_conns = 25
+min_conns = 5
+
+[jwt]
+# PRODUCTION: Generate strong secret (64+ characters) and store in environment variable!
+# Example: openssl rand -base64 64
+secret = "CHANGE-THIS-IN-PRODUCTION-use-openssl-rand-base64-64"
+access_token_expiry = "1h"
+refresh_token_expiry = "720h"  # 30 days
+invitation_expiry = "168h"      # 7 days
+admin_key_path = "./configs/keys/admin.key"
+admin_pub_key_path = "./configs/keys/admin.pub"

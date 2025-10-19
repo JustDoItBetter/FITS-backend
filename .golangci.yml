@@ -1,0 +1,62 @@
+# golangci-lint configuration
+# https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Checking for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Examines Go source code
+    - ineffassign   # Detects ineffectual assignments
+    - staticcheck   # Advanced Go linter
+    - typecheck     # Type-checks Go code
+    - unused        # Checks for unused code
+    - gofmt         # Checks if code is formatted
+    - goimports     # Checks import statements
+    - misspell      # Finds commonly misspelled words
+    - revive        # Fast & configurable linter
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+
+  gofmt:
+    simplify: true
+
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - dupl
+        - gosec
+
+    # Ignore long lines in generated files
+    - path: docs/docs.go
+      linters:
+        - lll
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

@@ -3,6 +3,10 @@ port = 8080
 host = "0.0.0.0"
 read_timeout = "30s"
 write_timeout = "30s"
+# Comma-separated CORS origins. Use "*" for all (dev only), or specify: "http://localhost:3000,https://example.com"
+allowed_origins = "*"
+# Rate limit: max requests per minute per IP. 0 = unlimited (not recommended for production)
+rate_limit = 100
 
 [secrets]
 metrics_secret = "i-forgot-my-token="
@@ -17,3 +21,21 @@ max_file_size = 104857600
 [logging]
 level = "info"
 format = "json"
+
+[database]
+host = "localhost"
+port = 5432
+user = "fits_user"
+password = "fits_password"
+database = "fits_db"
+ssl_mode = "disable"
+max_conns = 25
+min_conns = 5
+
+[jwt]
+secret = "your-jwt-secret-change-in-production"
+access_token_expiry = "1h"
+refresh_token_expiry = "720h"  # 30 days
+invitation_expiry = "168h"      # 7 days
+admin_key_path = "./configs/keys/admin.key"
+admin_pub_key_path = "./configs/keys/admin.pub"

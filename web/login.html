@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITS - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .logo p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .user-info {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .user-info.show {
+            display: block;
+        }
+
+        .user-info h3 {
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .user-info p {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 6px 0;
+        }
+
+        .user-info .label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .token-display {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+            margin-top: 8px;
+        }
+
+        .actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .actions button {
+            margin-top: 0;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>FITS</h1>
+            <p>Flexible IT Training System</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Benutzername</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    placeholder="Ihr Benutzername"
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Passwort</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    placeholder="Ihr Passwort"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button type="submit" id="submit-btn">Anmelden</button>
+        </form>
+
+        <div id="user-info" class="user-info">
+            <h3>Erfolgreich angemeldet!</h3>
+            <p><span class="label">Benutzer:</span> <span id="user-username"></span></p>
+            <p><span class="label">Email:</span> <span id="user-email"></span></p>
+            <p><span class="label">Rolle:</span> <span id="user-role"></span></p>
+            <p><span class="label">Access Token:</span></p>
+            <div class="token-display" id="access-token"></div>
+            <p style="margin-top: 12px;"><span class="label">Refresh Token:</span></p>
+            <div class="token-display" id="refresh-token"></div>
+
+            <div class="actions">
+                <button onclick="logout()" class="btn-secondary">Abmelden</button>
+                <button onclick="copyAccessToken()">Token kopieren</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_BASE_URL = window.location.origin;
+
+        // Store tokens
+        let accessToken = null;
+        let refreshToken = null;
+
+        // Handle form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submit-btn');
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Wird angemeldet...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Login fehlgeschlagen');
+                }
+
+                // Success!
+                accessToken = data.data.access_token;
+                refreshToken = data.data.refresh_token;
+
+                // Store tokens in localStorage
+                localStorage.setItem('access_token', accessToken);
+                localStorage.setItem('refresh_token', refreshToken);
+
+                showSuccess('Login erfolgreich!');
+
+                // Display user info
+                displayUserInfo(data.data.user);
+
+                // Hide form
+                document.getElementById('login-form').style.display = 'none';
+
+            } catch (error) {
+                console.error('Error during login:', error);
+                showError(error.message || 'Login fehlgeschlagen');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Anmelden';
+            }
+        });
+
+        function displayUserInfo(user) {
+            document.getElementById('user-username').textContent = user.username;
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-role').textContent =
+                user.role === 'student' ? 'Student' :
+                user.role === 'teacher' ? 'Lehrer' :
+                user.role === 'admin' ? 'Administrator' : user.role;
+            document.getElementById('access-token').textContent = accessToken;
+            document.getElementById('refresh-token').textContent = refreshToken;
+
+            document.getElementById('user-info').classList.add('show');
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            accessToken = null;
+            refreshToken = null;
+
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('user-info').classList.remove('show');
+            document.getElementById('alert').classList.remove('show');
+
+            // Reset form
+            document.getElementById('login-form').reset();
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').textContent = 'Anmelden';
+        }
+
+        function copyAccessToken() {
+            navigator.clipboard.writeText(accessToken).then(() => {
+                showSuccess('Access Token in Zwischenablage kopiert!');
+            }).catch(err => {
+                showError('Fehler beim Kopieren: ' + err.message);
+            });
+        }
+
+        // Alert helpers
+        function showError(message) {
+            const alert = document.getElementById('alert');
+            alert.className = 'alert alert-error show';
+            alert.textContent = message;
+        }
+
+        function showSuccess(message) {
+            const alert = document.getElementById('alert');
+            alert.className = 'alert alert-success show';
+            alert.textContent = message;
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('access_token')) {
+            showSuccess('Sie sind bereits angemeldet.');
+        }
+    </script>
+</body>
+</html>
