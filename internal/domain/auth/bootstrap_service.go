@@ -57,7 +57,7 @@ func (s *BootstrapService) InitializeAdmin(ctx context.Context) (*BootstrapRespo
 	// 5. Create admin user in database
 	adminUser := &User{
 		Username:     "admin",
-		PasswordHash: "not-used", // Admin uses certificate/token auth only
+		PasswordHash: "not-used",
 		Role:         crypto.RoleAdmin,
 	}
 
@@ -71,7 +71,7 @@ func (s *BootstrapService) InitializeAdmin(ctx context.Context) (*BootstrapRespo
 		adminUser.ID,
 		crypto.RoleAdmin,
 		crypto.TokenTypeAdmin,
-		100*365*24*time.Hour, // 100 years (effectively no expiry)
+		100*365*24*time.Hour,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate admin token: %w", err)
@@ -88,7 +88,7 @@ func (s *BootstrapService) InitializeAdmin(ctx context.Context) (*BootstrapRespo
 func (s *BootstrapService) IsBootstrapped(ctx context.Context) (bool, error) {
 	admin, err := s.repo.GetUserByUsername(ctx, "admin")
 	if err != nil {
-		return false, nil // Admin doesn't exist yet
+		return false, nil
 	}
 	return admin != nil, nil
 }

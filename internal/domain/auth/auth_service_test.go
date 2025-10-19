@@ -108,6 +108,9 @@ func (m *MockRepository) CreateTeacher(ctx context.Context, teacher *TeacherReco
 	args := m.Called(ctx, teacher)
 	return args.Error(0)
 }
+func (m *MockRepository) ExecuteInTransaction(ctx context.Context, fn func(repo Repository) error) error {
+	return fn(m)
+}
 
 // Helper function to create test JWT config
 func getTestJWTConfig() *config.JWTConfig {
