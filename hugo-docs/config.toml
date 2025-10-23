@@ -1,0 +1,43 @@
+baseURL = 'http://localhost:1313/'
+languageCode = 'en-us'
+title = 'FITS Backend Documentation'
+theme = 'fits-docs'
+
+enableRobotsTXT = true
+enableGitInfo = true
+
+[params]
+  description = "Comprehensive technical documentation for FITS Backend API - a flexible IT training management system with JWT authentication, RBAC, and REST API"
+  author = "FITS Development Team"
+  version = "1.0.1"
+  github = "https://github.com/JustDoItBetter/FITS-backend"
+  swagger_url = "http://localhost:8080/docs"
+  keywords = ["FITS", "API", "Documentation", "Go", "Fiber", "PostgreSQL", "JWT", "REST API", "Backend"]
+
+[params.social]
+  github = "JustDoItBetter/FITS-backend"
+
+[params.links]
+  github_edit = "https://github.com/JustDoItBetter/FITS-backend/edit/main/hugo-docs/content/"
+  github_issues = "https://github.com/JustDoItBetter/FITS-backend/issues"
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.highlight]
+  style = 'monokai'
+  lineNos = true
+  anchorLineNos = true
+
+[markup.tableOfContents]
+  startLevel = 2
+  endLevel = 4
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+  section = ["HTML"]
+
+[sitemap]
+  changefreq = 'weekly'
+  filename = 'sitemap.xml'
+  priority = 0.5

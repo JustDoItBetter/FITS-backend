@@ -1,0 +1,4 @@
+name = "FITS Docs"
+license = "MIT"
+description = "Simple documentation theme for FITS Backend"
+min_version = "0.100.0"

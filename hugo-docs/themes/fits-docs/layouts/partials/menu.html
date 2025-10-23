@@ -1,0 +1,17 @@
+<ul>
+    {{ $currentPage := . }}
+    {{ range .Site.Home.Sections.ByWeight }}
+    <li class="menu-section">
+        <a href="{{ .RelPermalink }}" class="{{ if $currentPage.IsDescendant . }}active{{ end }}">
+            {{ .Title }}
+        </a>
+        {{ if .Pages }}
+        <ul class="submenu">
+            {{ range .Pages.ByWeight }}
+            <li><a href="{{ .RelPermalink }}" class="{{ if eq $currentPage . }}active{{ end }}">{{ .Title }}</a></li>
+            {{ end }}
+        </ul>
+        {{ end }}
+    </li>
+    {{ end }}
+</ul>

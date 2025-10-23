@@ -77,3 +77,8 @@ docs/_build/
 site/
 
 .claude
+claude*
+.hugo_build.lock
+*.lock
+public/
+
