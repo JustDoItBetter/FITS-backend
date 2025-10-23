@@ -1,0 +1,13 @@
+{{ define "main" }}
+<article class="doc-content">
+    <h1>{{ .Title }}</h1>
+    <div class="content">
+        {{ .Content }}
+    </div>
+    <div class="doc-footer">
+        {{ if .Params.weight }}
+        <p class="meta">Weight: {{ .Params.weight }}</p>
+        {{ end }}
+    </div>
+</article>
+{{ end }}
