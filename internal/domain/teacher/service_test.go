@@ -10,6 +10,7 @@ import (
 	"github.com/JustDoItBetter/FITS-backend/internal/common/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // MockRepository is a mock implementation of the Repository interface
@@ -54,6 +55,10 @@ func (m *MockRepository) ListPaginated(ctx context.Context, params pagination.Pa
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
 	return args.Get(0).([]*Teacher), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockRepository) WithDB(db *gorm.DB) Repository {
+	return m
 }
 
 // Helper function to create a valid teacher

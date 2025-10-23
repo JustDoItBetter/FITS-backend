@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -100,16 +99,26 @@ func main() {
 	app.Use(recover.New())
 
 	// Security headers protect against common web vulnerabilities
-	app.Use(helmet.New(helmet.Config{
-		XSSProtection:      "1; mode=block", // Prevents XSS attacks in older browsers
-		ContentTypeNosniff: "nosniff",       // Prevents MIME sniffing
-		XFrameOptions:      "SAMEORIGIN",    // Prevents clickjacking
-		ReferrerPolicy:     "strict-origin-when-cross-origin",
-		// CSP allows Swagger UI to load fonts and styles from CDN
-		ContentSecurityPolicy: "default-src 'self'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'",
-	}))
+	// Note: COOP/COEP/CORP headers are NOT set as they break Swagger UI fetch functionality
+	// Using custom middleware instead of Helmet to have full control over headers
+	app.Use(func(c *fiber.Ctx) error {
+		// Essential security headers that don't interfere with Swagger UI
+		c.Set("X-XSS-Protection", "1; mode=block")
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("X-Frame-Options", "SAMEORIGIN")
+		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 
-	// Rate limiting prevents abuse and DoS attacks
+		// CSP allows Swagger UI to function properly with inline scripts/styles
+		c.Set("Content-Security-Policy", "default-src 'self'; connect-src 'self' http://localhost:8080; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'")
+
+		// IMPORTANT: DO NOT set Cross-Origin-Opener-Policy, Cross-Origin-Embedder-Policy,
+		// or Cross-Origin-Resource-Policy - they break Swagger UI fetch functionality
+
+		return c.Next()
+	})
+
+	// Global IP-based rate limiting (coarse-grained) prevents abuse and DoS attacks
+	// This provides basic protection for unauthenticated endpoints
 	if cfg.Server.RateLimit > 0 {
 		app.Use(limiter.New(limiter.Config{
 			Max:        cfg.Server.RateLimit,
@@ -125,72 +134,37 @@ func main() {
 		}))
 	}
 
+	// Per-user rate limiting (fine-grained) provides role-based limits
+	// This prevents authenticated users from being blocked by global limits
+	// Must come AFTER JWT middleware to have access to user context
+	userRateLimiter := middleware.NewUserRateLimiter(middleware.DefaultUserRateLimitConfig())
+	defer userRateLimiter.Stop() // Clean up on shutdown
+
 	app.Use(fiberlogger.New(fiberlogger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} (${latency})\n",
 	}))
 
 	// CORS configured from settings to support both development (*) and production (specific origins)
+	// IMPORTANT: Access the API via http://localhost:8080 (NOT http://0.0.0.0:8080)
+	// Browsers treat 0.0.0.0 as untrustworthy and will block requests
+	// Note: AllowCredentials must be false when using wildcard origins (security requirement)
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: cfg.Server.AllowedOrigins,
-		AllowMethods: "GET,POST,PUT,DELETE,PATCH",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowOrigins:     cfg.Server.AllowedOrigins,
+		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowCredentials: false, // Must be false with wildcard origins
+		ExposeHeaders:    "Content-Length,Content-Type",
+		MaxAge:           3600, // Cache preflight responses for 1 hour
 	}))
 
-	// Setup routes
-	setupRoutes(app, db, cfg)
+	// Setup routes with per-user rate limiting
+	setupRoutes(app, db, cfg, userRateLimiter)
 
-	// Start server
-	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
-
-	logger.Info("FITS Backend ready",
-		zap.String("address", addr),
-		zap.String("docs", fmt.Sprintf("http://%s/docs", addr)),
-		zap.String("bootstrap", fmt.Sprintf("POST http://%s/api/v1/bootstrap/init", addr)),
-	)
-
-	// Console output for convenience
-	log.Printf("")
-	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	log.Printf("FITS Backend v1.0.0 - Ready")
-	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	log.Printf("")
-	log.Printf("Server:        http://%s", addr)
-	log.Printf("Documentation: http://%s/docs", addr)
-	log.Printf("Health Check:  http://%s/health", addr)
-	log.Printf("")
-	log.Printf("Quick Start:")
-	log.Printf("  1. Bootstrap Admin: POST http://%s/api/v1/bootstrap/init", addr)
-	log.Printf("  2. Login:           POST http://%s/api/v1/auth/login", addr)
-	log.Printf("  3. View API Docs:   http://%s/docs", addr)
-	log.Printf("")
-	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	log.Printf("")
-
-	// Start server in goroutine for graceful shutdown support
-	go func() {
-		if err := app.Listen(addr); err != nil {
-			logger.Fatal("Server failed to start", zap.Error(err))
-		}
-	}()
-
-	// Graceful shutdown - wait for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	logger.Info("Shutdown signal received, gracefully shutting down...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := app.ShutdownWithContext(ctx); err != nil {
-		logger.Error("Forced shutdown", zap.Error(err))
-	}
-
-	logger.Info("Server exited gracefully")
+	// Start server with optional TLS support and graceful shutdown handling
+	startServer(app, cfg)
 }
 
-func setupRoutes(app *fiber.App, db *database.DB, cfg *config.Config) {
+func setupRoutes(app *fiber.App, db *database.DB, cfg *config.Config, userRateLimiter *middleware.UserRateLimiter) {
 	// Serve static files from web directory
 	app.Static("/", "./web", fiber.Static{
 		Index:         "login.html",
@@ -245,6 +219,9 @@ func setupRoutes(app *fiber.App, db *database.DB, cfg *config.Config) {
 	// Initialize JWT Middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(jwtService)
 
+	// Initialize Middleware Adapter for clean dependency injection
+	mwAdapter := middleware.NewMiddlewareAdapter(jwtMiddleware)
+
 	// Initialize Auth Domain
 	authRepo := auth.NewGormRepository(db.DB)
 	bootstrapService := auth.NewBootstrapService(authRepo, &cfg.JWT)
@@ -282,75 +259,112 @@ func setupRoutes(app *fiber.App, db *database.DB, cfg *config.Config) {
 	teacherHandler := teacher.NewHandler(teacherService)
 	signingHandler := signing.NewHandler(signingService)
 
-	// API v1 routes
+	// API v1 routes - Single source of truth for all routes and security
+	// Apply per-user rate limiting to all API routes (after JWT middleware extracts user info)
 	api := app.Group("/api/v1")
+	api.Use(userRateLimiter.Middleware())
 
-	// Register signing routes (protected)
+	// Register signing routes (protected - requires authentication)
 	signingGroup := api.Group("/signing")
 	signingGroup.Use(jwtMiddleware.RequireAuth())
 	signingHandler.RegisterRoutes(signingGroup)
 
-	// Register student routes
+	// Register student routes with their security requirements
+	// Routes and middleware are now defined in one place within the handler
 	studentGroup := api.Group("/student")
-	// POST for creation follows REST conventions and allows server-generated UUIDs if client doesn't provide one
-	studentGroup.Post("/",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin), // Prevents unauthorized student registration
-		studentHandler.Create,
-	)
-	// Optional auth allows public profile viewing while enabling role-based data filtering for authenticated users
-	studentGroup.Get("/:uuid",
-		jwtMiddleware.OptionalAuth(),
-		studentHandler.GetByUUID,
-	)
-	// PUT for full resource replacement follows REST semantics for idempotent updates
-	studentGroup.Put("/:uuid",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin), // Student data modifications restricted to admins for data integrity
-		studentHandler.Update,
-	)
-	// Soft delete preferred over hard delete for audit trail and data recovery
-	studentGroup.Delete("/:uuid",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin),
-		studentHandler.Delete,
-	)
-	// Optional auth enables public listing for discovery while allowing filtering based on user role
-	studentGroup.Get("/",
-		jwtMiddleware.OptionalAuth(),
-		studentHandler.List,
+	studentHandler.RegisterRoutes(studentGroup, mwAdapter, mwAdapter)
+
+	// Register teacher routes with their security requirements
+	// Routes and middleware are now defined in one place within the handler
+	teacherGroup := api.Group("/teacher")
+	teacherHandler.RegisterRoutes(teacherGroup, mwAdapter, mwAdapter)
+}
+
+// startServer starts the HTTP/HTTPS server with optional TLS support
+func startServer(app *fiber.App, cfg *config.Config) {
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	scheme := "http"
+	if cfg.Server.TLSEnabled {
+		scheme = "https"
+	}
+
+	logger.Info("FITS Backend ready",
+		zap.String("address", addr),
+		zap.String("scheme", scheme),
+		zap.Bool("tls_enabled", cfg.Server.TLSEnabled),
+		zap.String("docs", fmt.Sprintf("%s://%s/docs", scheme, addr)),
+		zap.String("bootstrap", fmt.Sprintf("POST %s://%s/api/v1/bootstrap/init", scheme, addr)),
 	)
 
-	// Register teacher routes
-	teacherGroup := api.Group("/teacher")
-	// POST for creation follows REST conventions
-	teacherGroup.Post("/",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin), // Teacher accounts must be created by admins to ensure valid credentials
-		teacherHandler.Create,
-	)
-	// Optional auth allows public teacher directory viewing
-	teacherGroup.Get("/:uuid",
-		jwtMiddleware.OptionalAuth(),
-		teacherHandler.GetByUUID,
-	)
-	// PUT for full resource replacement follows REST semantics
-	teacherGroup.Put("/:uuid",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin), // Teacher profile changes require admin approval for consistency
-		teacherHandler.Update,
-	)
-	// Cascading deletes handled at database level to maintain referential integrity
-	teacherGroup.Delete("/:uuid",
-		jwtMiddleware.RequireAuth(),
-		middleware.RequireRole(crypto.RoleAdmin),
-		teacherHandler.Delete,
-	)
-	// Optional auth enables public teacher directory
-	teacherGroup.Get("/",
-		jwtMiddleware.OptionalAuth(),
-		teacherHandler.List,
-	)
+	// Console output for convenience
+	// Use localhost for browser access, not 0.0.0.0 (browsers treat it as untrustworthy)
+	displayAddr := addr
+	if cfg.Server.Host == "0.0.0.0" {
+		displayAddr = fmt.Sprintf("localhost:%d", cfg.Server.Port)
+	}
+
+	log.Printf("")
+	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	log.Printf("FITS Backend v1.0.1 - Ready")
+	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	log.Printf("")
+	if cfg.Server.TLSEnabled {
+		log.Printf("🔒 HTTPS Enabled")
+		log.Printf("Server:        https://%s (listening on %s)", displayAddr, addr)
+		log.Printf("Certificate:   %s", cfg.Server.TLSCertFile)
+	} else {
+		log.Printf("⚠️  HTTP Mode (Development Only)")
+		log.Printf("Server:        http://%s (listening on %s)", displayAddr, addr)
+		log.Printf("Browser:       http://%s 👈 USE THIS IN BROWSER", displayAddr)
+	}
+	log.Printf("Documentation: %s://%s/docs", scheme, displayAddr)
+	log.Printf("Health Check:  %s://%s/health", scheme, displayAddr)
+	log.Printf("")
+	log.Printf("Quick Start:")
+	log.Printf("  1. Bootstrap Admin: POST %s://%s/api/v1/bootstrap/init", scheme, displayAddr)
+	log.Printf("  2. Login:           POST %s://%s/api/v1/auth/login", scheme, displayAddr)
+	log.Printf("  3. View API Docs:   %s://%s/docs", scheme, displayAddr)
+	log.Printf("")
+	log.Printf("⚠️  IMPORTANT: Use http://localhost:8080 in your browser")
+	log.Printf("   Do NOT use http://0.0.0.0:8080 - browsers will block it!")
+	log.Printf("")
+	log.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	log.Printf("")
+
+	// Start server in goroutine for graceful shutdown support
+	go func() {
+		var err error
+		if cfg.Server.TLSEnabled {
+			logger.Info("Starting HTTPS server with TLS",
+				zap.String("cert", cfg.Server.TLSCertFile),
+				zap.String("key", cfg.Server.TLSKeyFile),
+			)
+			err = app.ListenTLS(addr, cfg.Server.TLSCertFile, cfg.Server.TLSKeyFile)
+		} else {
+			logger.Warn("Starting HTTP server without TLS - use HTTPS in production!")
+			err = app.Listen(addr)
+		}
+
+		if err != nil {
+			logger.Fatal("Server failed to start", zap.Error(err))
+		}
+	}()
+
+	// Graceful shutdown - wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutdown signal received, gracefully shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		logger.Error("Forced shutdown", zap.Error(err))
+	}
+
+	logger.Info("Server exited gracefully")
 }
 
 // customErrorHandler provides centralized error handling across the entire application

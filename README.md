@@ -1,7 +1,7 @@
 # FITS Backend
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)]()
 [![API Docs](https://img.shields.io/badge/API-Swagger-85EA2D.svg)](http://localhost:8080/docs)
 
@@ -413,9 +413,7 @@ sudo systemctl status fits-backend
 ### Deployment Documentation
 
 For detailed deployment instructions, see:
-- [Docker Deployment Guide](./docs/deployment/docker.md)
-- [Production Setup Guide](./docs/deployment/production.md)
-- [Kubernetes Deployment](./docs/deployment/kubernetes.md) *(coming soon)*
+- [Deployment Guide](./docs/guides/deployment.md) - Docker and production setup
 
 ##  Monitoring
 
@@ -485,13 +483,12 @@ Student
 - **API Security:** RBAC on all endpoints with resource ownership checks
 - **Database Security:** Prepared statements to prevent SQL injection
 
-##  Additional Documentation
+## Additional Documentation
 
-- [API Test Report](./API_TEST_REPORT.md) - API testing results
-- [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) - Feature implementation status
-- [Known Issues](./KNOWN_ISSUES.md) - Current limitations and bugs
-- [Changelog](./CHANGELOG.md) - Version history and changes
-- [Quick Reference](./QUICK_REFERENCE.md) - Quick command reference
+- [Documentation Index](./docs/README.md) - Complete documentation navigation
+- [Implementation Summary](./docs/development/IMPLEMENTATION_SUMMARY.md) - Feature implementation status
+- [Known Issues](./docs/development/KNOWN_ISSUES.md) - Current limitations and bugs
+- [Quick Reference](./docs/guides/QUICK_REFERENCE.md) - Quick command reference
 
 ##  Roadmap
 
@@ -537,9 +534,9 @@ Contributions are welcome! Please follow these steps:
 
 Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 
-##  License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ##  Acknowledgments
 

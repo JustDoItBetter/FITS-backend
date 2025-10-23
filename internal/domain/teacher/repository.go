@@ -6,6 +6,7 @@ import (
 
 	"github.com/JustDoItBetter/FITS-backend/internal/common/errors"
 	"github.com/JustDoItBetter/FITS-backend/internal/common/pagination"
+	"gorm.io/gorm"
 )
 
 // Repository defines the interface for teacher data access
@@ -18,6 +19,9 @@ type Repository interface {
 	ListPaginated(ctx context.Context, params pagination.Params) ([]*Teacher, int64, error)
 	// List retrieves all teachers (deprecated: use ListPaginated for better performance)
 	List(ctx context.Context) ([]*Teacher, error)
+	// WithDB returns a new repository instance using the provided database connection
+	// This enables the repository to participate in transactions
+	WithDB(db *gorm.DB) Repository
 }
 
 // InMemoryRepository is a simple in-memory implementation of Repository
@@ -125,4 +129,10 @@ func (r *InMemoryRepository) ListPaginated(ctx context.Context, params paginatio
 	}
 
 	return allTeachers[start:end], totalCount, nil
+}
+
+// WithDB returns the same repository instance (in-memory doesn't use database connections)
+// This is a no-op implementation to satisfy the Repository interface
+func (r *InMemoryRepository) WithDB(db *gorm.DB) Repository {
+	return r
 }

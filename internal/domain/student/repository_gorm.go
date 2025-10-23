@@ -62,6 +62,12 @@ func NewGormRepository(db *gorm.DB) Repository {
 	return &GormRepository{db: db}
 }
 
+// WithDB returns a new repository instance using the provided database connection
+// This enables the repository to participate in transactions
+func (r *GormRepository) WithDB(db *gorm.DB) Repository {
+	return &GormRepository{db: db}
+}
+
 // Create adds a new student to the database
 func (r *GormRepository) Create(ctx context.Context, student *Student) error {
 	model := FromStudent(student)

@@ -14,12 +14,53 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) RegisterRoutes(router fiber.Router) {
-	router.Put("/", h.Create)
-	router.Get("/:uuid", h.GetByUUID)
-	router.Post("/:uuid", h.Update)
-	router.Delete("/:uuid", h.Delete)
-	router.Get("/", h.List)
+// RegisterRoutes registers all student endpoints with their required middleware
+// This provides a single source of truth for routes and their security requirements
+func (h *Handler) RegisterRoutes(router fiber.Router, jwtMW JWTMiddleware, rbacMW RBACMiddleware) {
+	// POST /api/v1/student - Create student (Admin only)
+	router.Post("/",
+		jwtMW.RequireAuth(),
+		rbacMW.RequireAdmin(),
+		h.Create,
+	)
+
+	// GET /api/v1/student/:uuid - Get student (optional auth for future filtering)
+	router.Get("/:uuid",
+		jwtMW.OptionalAuth(),
+		h.GetByUUID,
+	)
+
+	// PUT /api/v1/student/:uuid - Update student (Admin only)
+	router.Put("/:uuid",
+		jwtMW.RequireAuth(),
+		rbacMW.RequireAdmin(),
+		h.Update,
+	)
+
+	// DELETE /api/v1/student/:uuid - Delete student (Admin only, soft delete)
+	router.Delete("/:uuid",
+		jwtMW.RequireAuth(),
+		rbacMW.RequireAdmin(),
+		h.Delete,
+	)
+
+	// GET /api/v1/student - List students (optional auth for future filtering)
+	router.Get("/",
+		jwtMW.OptionalAuth(),
+		h.List,
+	)
+}
+
+// JWTMiddleware interface defines JWT authentication middleware requirements
+type JWTMiddleware interface {
+	RequireAuth() fiber.Handler
+	OptionalAuth() fiber.Handler
+}
+
+// RBACMiddleware interface defines role-based access control middleware
+type RBACMiddleware interface {
+	RequireAdmin() fiber.Handler
+	RequireRole(roles ...interface{}) fiber.Handler
 }
 
 // Create godoc
@@ -91,7 +132,7 @@ func (h *Handler) GetByUUID(c *fiber.Ctx) error {
 // @Failure 422 {object} response.ErrorResponse "Validation error - invalid field values"
 // @Failure 500 {object} response.ErrorResponse "Internal server error"
 // @Security BearerAuth
-// @Router /api/v1/student/{uuid} [post]
+// @Router /api/v1/student/{uuid} [put]
 func (h *Handler) Update(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")
 

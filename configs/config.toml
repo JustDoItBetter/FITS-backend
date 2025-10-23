@@ -8,6 +8,12 @@ allowed_origins = "*"
 # Rate limit: max requests per minute per IP. 0 = unlimited (not recommended for production)
 rate_limit = 100
 
+# TLS/HTTPS Configuration (recommended for production)
+tls_enabled = false
+tls_cert_file = "./certs/server.crt"
+tls_key_file = "./certs/server.key"
+tls_auto_redirect = false  # Auto-redirect HTTP to HTTPS (requires running on both ports)
+
 [secrets]
 metrics_secret = "i-forgot-my-token="
 registration_secret = "i-forgot-my-token="
@@ -33,7 +39,9 @@ max_conns = 25
 min_conns = 5
 
 [jwt]
-secret = "your-jwt-secret-change-in-production"
+# SECURITY: Must be at least 32 characters for HS256. Change in production!
+# Generate with: openssl rand -base64 32
+secret = "CHANGE-THIS-SECRET-KEY-IN-PRODUCTION-USE-OPENSSL-RAND-BASE64-32"
 access_token_expiry = "1h"
 refresh_token_expiry = "720h"  # 30 days
 invitation_expiry = "168h"      # 7 days

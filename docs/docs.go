@@ -407,8 +407,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/sign_requests": {
+        "/api/v1/signing/sign_requests": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve all pending sign requests as a parquet file",
                 "produces": [
                     "application/octet-stream"
@@ -424,6 +429,12 @@ const docTemplate = `{
                             "type": "file"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
+                        }
+                    },
                     "501": {
                         "description": "Not Implemented",
                         "schema": {
@@ -433,8 +444,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/sign_uploads": {
+        "/api/v1/signing/sign_uploads": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Upload a parquet file containing signed requests",
                 "consumes": [
                     "multipart/form-data"
@@ -464,6 +480,79 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not Implemented",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/signing/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upload a parquet file containing student data",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signing"
+                ],
+                "summary": "Upload parquet file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Parquet file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_domain_signing.UploadRecord"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
                         }
@@ -534,7 +623,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -680,7 +769,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1045,7 +1134,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1200,62 +1289,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/upload": {
-            "post": {
-                "description": "Upload a parquet file containing student data",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "signing"
-                ],
-                "summary": "Upload parquet file",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "Parquet file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_domain_signing.UploadRecord"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
-                        }
-                    },
-                    "501": {
-                        "description": "Not Implemented",
                         "schema": {
                             "$ref": "#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse"
                         }
@@ -1588,10 +1621,6 @@ const docTemplate = `{
                     "description": "Optional - can be assigned later",
                     "type": "string",
                     "example": "teacher-uuid-123"
-                },
-                "uuid": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         },
@@ -1697,10 +1726,6 @@ const docTemplate = `{
                     "maxLength": 100,
                     "minLength": 1,
                     "example": "Schmidt"
-                },
-                "uuid": {
-                    "type": "string",
-                    "example": "teacher-uuid-123"
                 }
             }
         },

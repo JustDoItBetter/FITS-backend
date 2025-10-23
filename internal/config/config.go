@@ -24,6 +24,12 @@ type ServerConfig struct {
 	WriteTimeout   string `toml:"write_timeout"`
 	AllowedOrigins string `toml:"allowed_origins"` // Comma-separated list of allowed CORS origins
 	RateLimit      int    `toml:"rate_limit"`      // Max requests per minute per IP (0 = unlimited)
+
+	// TLS/HTTPS Configuration
+	TLSEnabled      bool   `toml:"tls_enabled"`       // Enable HTTPS/TLS
+	TLSCertFile     string `toml:"tls_cert_file"`     // Path to TLS certificate file
+	TLSKeyFile      string `toml:"tls_key_file"`      // Path to TLS private key file
+	TLSAutoRedirect bool   `toml:"tls_auto_redirect"` // Auto-redirect HTTP to HTTPS
 }
 
 type SecretsConfig struct {
@@ -66,20 +72,36 @@ type JWTConfig struct {
 }
 
 // GetAccessTokenExpiry returns the access token expiry duration
+// Panics if the duration cannot be parsed (should never happen after Validate())
 func (j *JWTConfig) GetAccessTokenExpiry() time.Duration {
-	d, _ := time.ParseDuration(j.AccessTokenExpiry)
+	d, err := time.ParseDuration(j.AccessTokenExpiry)
+	if err != nil {
+		// This should never happen if Validate() was called properly
+		// Panic is appropriate here because invalid token expiry is a critical security issue
+		panic(fmt.Sprintf("invalid access_token_expiry '%s': %v (config should have been validated)", j.AccessTokenExpiry, err))
+	}
 	return d
 }
 
 // GetRefreshTokenExpiry returns the refresh token expiry duration
+// Panics if the duration cannot be parsed (should never happen after Validate())
 func (j *JWTConfig) GetRefreshTokenExpiry() time.Duration {
-	d, _ := time.ParseDuration(j.RefreshTokenExpiry)
+	d, err := time.ParseDuration(j.RefreshTokenExpiry)
+	if err != nil {
+		// This should never happen if Validate() was called properly
+		panic(fmt.Sprintf("invalid refresh_token_expiry '%s': %v (config should have been validated)", j.RefreshTokenExpiry, err))
+	}
 	return d
 }
 
 // GetInvitationExpiry returns the invitation expiry duration
+// Panics if the duration cannot be parsed (should never happen after Validate())
 func (j *JWTConfig) GetInvitationExpiry() time.Duration {
-	d, _ := time.ParseDuration(j.InvitationExpiry)
+	d, err := time.ParseDuration(j.InvitationExpiry)
+	if err != nil {
+		// This should never happen if Validate() was called properly
+		panic(fmt.Sprintf("invalid invitation_expiry '%s': %v (config should have been validated)", j.InvitationExpiry, err))
+	}
 	return d
 }
 
@@ -119,6 +141,16 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid server.write_timeout: %w", err)
 	}
 
+	// TLS validation (if enabled)
+	if c.Server.TLSEnabled {
+		if c.Server.TLSCertFile == "" {
+			return fmt.Errorf("server.tls_cert_file must be set when TLS is enabled")
+		}
+		if c.Server.TLSKeyFile == "" {
+			return fmt.Errorf("server.tls_key_file must be set when TLS is enabled")
+		}
+	}
+
 	// Secrets validation
 	if c.Secrets.MetricsSecret == "" {
 		return fmt.Errorf("secrets.metrics_secret must be set")
@@ -142,6 +174,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("jwt.secret must be set")
 	}
 
+	// JWT secret must be at least 32 characters (256 bits) for HS256 security
+	if len(c.JWT.Secret) < 32 {
+		return fmt.Errorf("jwt.secret must be at least 32 characters for HS256 security (current length: %d)", len(c.JWT.Secret))
+	}
+
 	if _, err := time.ParseDuration(c.JWT.AccessTokenExpiry); err != nil {
 		return fmt.Errorf("invalid jwt.access_token_expiry: %w", err)
 	}
@@ -157,12 +194,25 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// GetReadTimeout returns the server read timeout duration
+// Panics if the duration cannot be parsed (should never happen after Validate())
 func (c *Config) GetReadTimeout() time.Duration {
-	d, _ := time.ParseDuration(c.Server.ReadTimeout)
+	d, err := time.ParseDuration(c.Server.ReadTimeout)
+	if err != nil {
+		// This should never happen if Validate() was called properly
+		// Panic is appropriate because invalid timeouts can cause server hangs
+		panic(fmt.Sprintf("invalid read_timeout '%s': %v (config should have been validated)", c.Server.ReadTimeout, err))
+	}
 	return d
 }
 
+// GetWriteTimeout returns the server write timeout duration
+// Panics if the duration cannot be parsed (should never happen after Validate())
 func (c *Config) GetWriteTimeout() time.Duration {
-	d, _ := time.ParseDuration(c.Server.WriteTimeout)
+	d, err := time.ParseDuration(c.Server.WriteTimeout)
+	if err != nil {
+		// This should never happen if Validate() was called properly
+		panic(fmt.Sprintf("invalid write_timeout '%s': %v (config should have been validated)", c.Server.WriteTimeout, err))
+	}
 	return d
 }

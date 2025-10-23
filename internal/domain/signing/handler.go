@@ -33,8 +33,10 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 // @Param file formData file true "Parquet file"
 // @Success 201 {object} response.SuccessResponse{data=UploadRecord}
 // @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
 // @Failure 501 {object} response.ErrorResponse
-// @Router /api/v1/upload [post]
+// @Security BearerAuth
+// @Router /api/v1/signing/upload [post]
 func (h *Handler) Upload(c *fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -67,8 +69,10 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 // @Tags signing
 // @Produce application/octet-stream
 // @Success 200 {file} binary "Parquet file with pending sign requests"
+// @Failure 401 {object} response.ErrorResponse
 // @Failure 501 {object} response.ErrorResponse
-// @Router /api/v1/sign_requests [get]
+// @Security BearerAuth
+// @Router /api/v1/signing/sign_requests [get]
 func (h *Handler) GetSignRequests(c *fiber.Ctx) error {
 	data, err := h.service.GetPendingSignRequests(c.Context())
 	if err != nil {
@@ -90,8 +94,10 @@ func (h *Handler) GetSignRequests(c *fiber.Ctx) error {
 // @Param file formData file true "Parquet file with signed requests"
 // @Success 200 {object} response.SuccessResponse
 // @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
 // @Failure 501 {object} response.ErrorResponse
-// @Router /api/v1/sign_uploads [post]
+// @Security BearerAuth
+// @Router /api/v1/signing/sign_uploads [post]
 func (h *Handler) SignUploads(c *fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {

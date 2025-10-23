@@ -87,11 +87,6 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return response.Error(c, err)
 	}
 
-	// Debug: Log response before sending
-	if result != nil {
-		println("[HANDLER] Sending login response with tokens")
-	}
-
 	return response.Success(c, result)
 }
 

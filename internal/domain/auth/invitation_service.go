@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/JustDoItBetter/FITS-backend/internal/common/errors"
+	"github.com/JustDoItBetter/FITS-backend/internal/common/validation"
 	"github.com/JustDoItBetter/FITS-backend/internal/config"
 	"github.com/JustDoItBetter/FITS-backend/pkg/crypto"
 )
@@ -146,6 +147,16 @@ func (s *InvitationService) CompleteInvitation(ctx context.Context, token string
 	existingUser, _ := s.repo.GetUserByUsername(ctx, req.Username)
 	if existingUser != nil {
 		return errors.Conflict("username already exists")
+	}
+
+	// Validate password strength before hashing
+	if err := validation.ValidatePasswordStrength(req.Password); err != nil {
+		return err
+	}
+
+	// Check against common passwords
+	if validation.IsCommonPassword(req.Password) {
+		return errors.ValidationError("password is too common and easily guessable, please choose a stronger password")
 	}
 
 	// Hash password

@@ -8,6 +8,8 @@ import (
 	"github.com/JustDoItBetter/FITS-backend/internal/common/errors"
 	"github.com/JustDoItBetter/FITS-backend/internal/config"
 	"github.com/JustDoItBetter/FITS-backend/pkg/crypto"
+	"github.com/JustDoItBetter/FITS-backend/pkg/logger"
+	"go.uber.org/zap"
 )
 
 // AuthService handles authentication operations
@@ -72,8 +74,13 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, fmt.Errorf("failed to save refresh token: %w", err)
 	}
 
-	// Update last login (non-critical, errors are silently ignored)
-	_ = s.repo.UpdateLastLogin(ctx, user.ID)
+	// Update last login (non-critical, but log errors for monitoring)
+	if err := s.repo.UpdateLastLogin(ctx, user.ID); err != nil {
+		logger.Warn("Failed to update last login timestamp",
+			zap.String("user_id", user.ID),
+			zap.Error(err),
+		)
+	}
 
 	return &LoginResponse{
 		AccessToken:  accessToken,
@@ -106,8 +113,14 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshTokenString
 
 	// Check if expired
 	if refreshToken.IsExpired() {
-		// Delete expired token
-		s.repo.DeleteRefreshToken(ctx, refreshTokenString)
+		// Attempt to delete expired token from database
+		// Error is logged but doesn't block the rejection - security over cleanup
+		if err := s.repo.DeleteRefreshToken(ctx, refreshTokenString); err != nil {
+			logger.Error("Failed to delete expired refresh token",
+				zap.String("user_id", refreshToken.UserID),
+				zap.Error(err),
+			)
+		}
 		return nil, errors.Unauthorized("refresh token expired")
 	}
 

@@ -5,12 +5,15 @@ import (
 
 	"github.com/JustDoItBetter/FITS-backend/internal/common/errors"
 	"github.com/JustDoItBetter/FITS-backend/internal/common/pagination"
+	"github.com/JustDoItBetter/FITS-backend/pkg/database"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 // Service handles business logic for students
 type Service struct {
 	repo     Repository
+	txMgr    *database.TransactionManager
 	validate *validator.Validate
 }
 
@@ -18,6 +21,15 @@ type Service struct {
 func NewService(repo Repository) *Service {
 	return &Service{
 		repo:     repo,
+		validate: validator.New(),
+	}
+}
+
+// NewServiceWithTx creates a new student service with transaction support
+func NewServiceWithTx(repo Repository, txMgr *database.TransactionManager) *Service {
+	return &Service{
+		repo:     repo,
+		txMgr:    txMgr,
 		validate: validator.New(),
 	}
 }
@@ -46,22 +58,45 @@ func (s *Service) GetByUUID(ctx context.Context, uuid string) (*Student, error) 
 }
 
 // Update updates an existing student
+// Uses transactions to prevent race conditions between read and write operations
 func (s *Service) Update(ctx context.Context, uuid string, req *UpdateStudentRequest) (*Student, error) {
 	// Validate request
 	if err := s.validate.Struct(req); err != nil {
 		return nil, errors.ValidationError(err.Error())
 	}
 
-	// Get existing student
+	// If transaction manager is available, use transaction for atomic read-update
+	// This prevents race conditions where another request modifies the student
+	// between our read and write operations
+	if s.txMgr != nil {
+		return database.WithTransactionValue(ctx, s.txMgr, func(tx *gorm.DB) (*Student, error) {
+			// Get existing student within transaction
+			txRepo := s.repo.WithDB(tx)
+			student, err := txRepo.GetByUUID(ctx, uuid)
+			if err != nil {
+				return nil, err
+			}
+
+			// Update student fields
+			student.Update(req)
+
+			// Save updated student within same transaction
+			if err := txRepo.Update(ctx, student); err != nil {
+				return nil, err
+			}
+
+			return student, nil
+		})
+	}
+
+	// Fallback to non-transactional update (backward compatibility)
 	student, err := s.repo.GetByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
 	}
 
-	// Update student fields
 	student.Update(req)
 
-	// Save updated student
 	if err := s.repo.Update(ctx, student); err != nil {
 		return nil, err
 	}

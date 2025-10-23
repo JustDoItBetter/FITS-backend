@@ -238,9 +238,6 @@ definitions:
         description: Optional - can be assigned later
         example: teacher-uuid-123
         type: string
-      uuid:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
     required:
     - email
     - first_name
@@ -321,9 +318,6 @@ definitions:
         example: Schmidt
         maxLength: 100
         minLength: 1
-        type: string
-      uuid:
-        example: teacher-uuid-123
         type: string
     required:
     - department
@@ -641,7 +635,7 @@ paths:
       summary: Complete invitation
       tags:
       - invitations
-  /api/v1/sign_requests:
+  /api/v1/signing/sign_requests:
     get:
       description: Retrieve all pending sign requests as a parquet file
       produces:
@@ -651,14 +645,20 @@ paths:
           description: Parquet file with pending sign requests
           schema:
             type: file
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
         "501":
           description: Not Implemented
           schema:
             $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get pending sign requests
       tags:
       - signing
-  /api/v1/sign_uploads:
+  /api/v1/signing/sign_uploads:
     post:
       consumes:
       - multipart/form-data
@@ -680,11 +680,57 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
         "501":
           description: Not Implemented
           schema:
             $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Upload signed requests
+      tags:
+      - signing
+  /api/v1/signing/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a parquet file containing student data
+      parameters:
+      - description: Parquet file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_domain_signing.UploadRecord'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload parquet file
       tags:
       - signing
   /api/v1/student:
@@ -725,7 +771,7 @@ paths:
       summary: List students with pagination
       tags:
       - Students
-    put:
+    post:
       consumes:
       - application/json
       description: Creates a new student record. Requires admin role. Email must be
@@ -858,7 +904,7 @@ paths:
       summary: Get student by UUID
       tags:
       - Students
-    post:
+    put:
       consumes:
       - application/json
       description: Updates an existing student's information. Requires admin role.
@@ -1093,7 +1139,7 @@ paths:
       summary: Get teacher by UUID
       tags:
       - Teachers
-    post:
+    put:
       consumes:
       - application/json
       description: Updates an existing teacher's information. Requires admin role.
@@ -1157,40 +1203,6 @@ paths:
       summary: Update teacher information
       tags:
       - Teachers
-  /api/v1/upload:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Upload a parquet file containing student data
-      parameters:
-      - description: Parquet file
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            allOf:
-            - $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_domain_signing.UploadRecord'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
-        "501":
-          description: Not Implemented
-          schema:
-            $ref: '#/definitions/github_com_JustDoItBetter_FITS-backend_internal_common_response.ErrorResponse'
-      summary: Upload parquet file
-      tags:
-      - signing
 schemes:
 - http
 - https
