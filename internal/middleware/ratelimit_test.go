@@ -114,7 +114,7 @@ func TestUserRateLimiter_GetStatus(t *testing.T) {
 	userID := "test-user"
 
 	// No requests yet
-	count, resetTime, exists := limiter.GetStatus(userID)
+	count, _, exists := limiter.GetStatus(userID)
 	assert.False(t, exists)
 	assert.Equal(t, 0, count)
 
@@ -124,7 +124,7 @@ func TestUserRateLimiter_GetStatus(t *testing.T) {
 	limiter.allow(userID, 5)
 
 	// Check status
-	count, resetTime, exists = limiter.GetStatus(userID)
+	count, resetTime, exists := limiter.GetStatus(userID)
 	assert.True(t, exists)
 	assert.Equal(t, 3, count)
 	assert.True(t, resetTime.After(time.Now()))
@@ -284,7 +284,7 @@ func TestUserRateLimiter_ConcurrentAccess(t *testing.T) {
 	done := make(chan bool, concurrency)
 
 	for i := 0; i < concurrency; i++ {
-		go func(id int) {
+		go func(_ int) {
 			userID := "concurrent-user"
 			for j := 0; j < requestsPerGoroutine; j++ {
 				limiter.allow(userID, 1000) // High limit to avoid rejections
@@ -346,7 +346,7 @@ func TestUserRateLimiter_Middleware_Integration(t *testing.T) {
 		req := httptest.NewRequest("GET", "/test", nil)
 		resp, err := app.Test(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		assert.Equal(t, 200, resp.StatusCode, "Request %d should succeed", i+1)
 	}
 
@@ -354,6 +354,6 @@ func TestUserRateLimiter_Middleware_Integration(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 	resp, err := app.Test(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, 429, resp.StatusCode, "Request 11 should be rate limited")
 }

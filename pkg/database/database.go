@@ -1,3 +1,4 @@
+// Package database provides database connection and management utilities for PostgreSQL.
 package database
 
 import (
@@ -115,7 +116,7 @@ func ensureDatabaseExists(cfg *config.DatabaseConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to postgres database: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

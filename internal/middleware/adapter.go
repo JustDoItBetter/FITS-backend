@@ -1,3 +1,4 @@
+// Package middleware provides HTTP middleware components for the FITS backend application.
 package middleware
 
 import (

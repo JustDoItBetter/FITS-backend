@@ -1,3 +1,4 @@
+// Package signing provides handlers and services for document signing operations.
 package signing
 
 import (
@@ -48,7 +49,7 @@ func (h *Handler) Upload(c *fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, err)
 	}
-	defer fileData.Close()
+	defer func() { _ = fileData.Close() }()
 
 	data := make([]byte, file.Size)
 	if _, err := fileData.Read(data); err != nil {
@@ -109,7 +110,7 @@ func (h *Handler) SignUploads(c *fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, err)
 	}
-	defer fileData.Close()
+	defer func() { _ = fileData.Close() }()
 
 	data := make([]byte, file.Size)
 	if _, err := fileData.Read(data); err != nil {

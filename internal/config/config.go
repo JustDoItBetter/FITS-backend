@@ -1,3 +1,4 @@
+// Package config provides configuration management for the FITS backend application.
 package config
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Config represents the main application configuration.
 type Config struct {
 	Server   ServerConfig   `toml:"server"`
 	Secrets  SecretsConfig  `toml:"secrets"`
@@ -17,6 +19,7 @@ type Config struct {
 	JWT      JWTConfig      `toml:"jwt"`
 }
 
+// ServerConfig holds the HTTP server configuration.
 type ServerConfig struct {
 	Port           int    `toml:"port"`
 	Host           string `toml:"host"`
@@ -32,6 +35,7 @@ type ServerConfig struct {
 	TLSAutoRedirect bool   `toml:"tls_auto_redirect"` // Auto-redirect HTTP to HTTPS
 }
 
+// SecretsConfig holds the API secrets configuration.
 type SecretsConfig struct {
 	MetricsSecret      string `toml:"metrics_secret"`
 	RegistrationSecret string `toml:"registration_secret"`
@@ -39,11 +43,13 @@ type SecretsConfig struct {
 	UpdateSecret       string `toml:"update_secret"`
 }
 
+// StorageConfig holds the file storage configuration.
 type StorageConfig struct {
 	UploadDir   string `toml:"upload_dir"`
 	MaxFileSize int64  `toml:"max_file_size"`
 }
 
+// LoggingConfig holds the logging configuration.
 type LoggingConfig struct {
 	Level  string `toml:"level"`
 	Format string `toml:"format"`
@@ -113,7 +119,9 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	if port := os.Getenv("SERVER_PORT"); port != "" {
-		fmt.Sscanf(port, "%d", &cfg.Server.Port)
+		if _, err := fmt.Sscanf(port, "%d", &cfg.Server.Port); err != nil {
+			return nil, fmt.Errorf("invalid SERVER_PORT value: %w", err)
+		}
 	}
 
 	if metricsSecret := os.Getenv("METRICS_SECRET"); metricsSecret != "" {

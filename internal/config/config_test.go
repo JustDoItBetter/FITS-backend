@@ -371,7 +371,7 @@ func TestConfig_Load_EnvironmentOverride(t *testing.T) {
 	// Create a temporary config file for testing
 	tmpFile, err := os.CreateTemp("", "config-test-*.toml")
 	require.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	configContent := `
 [server]
@@ -416,12 +416,12 @@ format = "json"
 `
 	_, err = tmpFile.WriteString(configContent)
 	require.NoError(t, err)
-	tmpFile.Close()
+	require.NoError(t, tmpFile.Close())
 
 	// Test environment variable override for SERVER_PORT
 	t.Run("SERVER_PORT override", func(t *testing.T) {
-		os.Setenv("SERVER_PORT", "9090")
-		defer os.Unsetenv("SERVER_PORT")
+		require.NoError(t, os.Setenv("SERVER_PORT", "9090"))
+		defer func() { _ = os.Unsetenv("SERVER_PORT") }()
 
 		cfg, err := Load(tmpFile.Name())
 		require.NoError(t, err)
@@ -430,8 +430,8 @@ format = "json"
 
 	// Test environment variable override for METRICS_SECRET
 	t.Run("METRICS_SECRET override", func(t *testing.T) {
-		os.Setenv("METRICS_SECRET", "env-metrics-secret")
-		defer os.Unsetenv("METRICS_SECRET")
+		require.NoError(t, os.Setenv("METRICS_SECRET", "env-metrics-secret"))
+		defer func() { _ = os.Unsetenv("METRICS_SECRET") }()
 
 		cfg, err := Load(tmpFile.Name())
 		require.NoError(t, err)

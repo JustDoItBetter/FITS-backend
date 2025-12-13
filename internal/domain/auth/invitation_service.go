@@ -33,20 +33,21 @@ func NewInvitationService(repo Repository, jwtService *crypto.JWTService, jwtCon
 func (s *InvitationService) CreateInvitation(ctx context.Context, req *CreateInvitationRequest) (*CreateInvitationResponse, error) {
 	// Validate role
 	var role crypto.Role
-	if req.Role == "student" {
+	switch req.Role {
+	case "student":
 		role = crypto.RoleStudent
 		// Validate that student has teacher_uuid
 		if req.TeacherUUID == nil || *req.TeacherUUID == "" {
 			return nil, errors.ValidationError("teacher_uuid is required for students")
 		}
 		// TODO: Validate that teacher exists in database
-	} else if req.Role == "teacher" {
+	case "teacher":
 		role = crypto.RoleTeacher
 		// Validate that teacher has department
 		if req.Department == nil || *req.Department == "" {
 			return nil, errors.ValidationError("department is required for teachers")
 		}
-	} else {
+	default:
 		return nil, errors.ValidationError("role must be 'student' or 'teacher'")
 	}
 
@@ -172,7 +173,8 @@ func (s *InvitationService) CompleteInvitation(ctx context.Context, token string
 	// If any operation fails, all changes are rolled back automatically
 	return s.repo.ExecuteInTransaction(ctx, func(txRepo Repository) error {
 		// Create Student or Teacher record
-		if invitation.Role == crypto.RoleStudent {
+		switch invitation.Role {
+		case crypto.RoleStudent:
 			student := &StudentRecord{
 				ID:        entityUUID,
 				FirstName: invitation.FirstName,
@@ -183,7 +185,7 @@ func (s *InvitationService) CompleteInvitation(ctx context.Context, token string
 			if err := txRepo.CreateStudent(ctx, student); err != nil {
 				return fmt.Errorf("failed to create student: %w", err)
 			}
-		} else if invitation.Role == crypto.RoleTeacher {
+		case crypto.RoleTeacher:
 			if invitation.Department == nil {
 				return errors.ValidationError("department is required for teacher")
 			}

@@ -30,8 +30,8 @@ func TestGenerateRSAKeyPair(t *testing.T) {
 		keyPair, err := GenerateRSAKeyPair()
 		require.NoError(t, err)
 
-		assert.Equal(t, keyPair.PublicKey.N, keyPair.PrivateKey.PublicKey.N)
-		assert.Equal(t, keyPair.PublicKey.E, keyPair.PrivateKey.PublicKey.E)
+		assert.Equal(t, keyPair.PublicKey.N, keyPair.PrivateKey.N)
+		assert.Equal(t, keyPair.PublicKey.E, keyPair.PrivateKey.E)
 	})
 
 	t.Run("generates different keys each time", func(t *testing.T) {

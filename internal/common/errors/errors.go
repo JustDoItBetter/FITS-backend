@@ -1,3 +1,4 @@
+// Package errors provides custom error types and error handling utilities for the FITS backend application.
 package errors
 
 import (
@@ -29,31 +30,37 @@ func NewAppError(code int, message string, details string) *AppError {
 	}
 }
 
-// Common error constructors
+// BadRequest creates an AppError with HTTP 400 Bad Request status.
 func BadRequest(message string) *AppError {
 	return NewAppError(http.StatusBadRequest, "Bad Request", message)
 }
 
+// NotFound creates an AppError with HTTP 404 Not Found status for the specified resource.
 func NotFound(resource string) *AppError {
 	return NewAppError(http.StatusNotFound, "Not Found", fmt.Sprintf("%s not found", resource))
 }
 
+// Unauthorized creates an AppError with HTTP 401 Unauthorized status.
 func Unauthorized(message string) *AppError {
 	return NewAppError(http.StatusUnauthorized, "Unauthorized", message)
 }
 
+// InternalServerError creates an AppError with HTTP 500 Internal Server Error status.
 func InternalServerError(message string) *AppError {
 	return NewAppError(http.StatusInternalServerError, "Internal Server Error", message)
 }
 
+// ValidationError creates an AppError with HTTP 422 Unprocessable Entity status for validation failures.
 func ValidationError(message string) *AppError {
 	return NewAppError(http.StatusUnprocessableEntity, "Validation Error", message)
 }
 
+// Conflict creates an AppError with HTTP 409 Conflict status.
 func Conflict(message string) *AppError {
 	return NewAppError(http.StatusConflict, "Conflict", message)
 }
 
+// Internal creates an AppError with HTTP 500 Internal Server Error status (alias for InternalServerError).
 func Internal(message string) *AppError {
 	return InternalServerError(message)
 }

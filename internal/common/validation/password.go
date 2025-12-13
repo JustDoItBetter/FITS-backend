@@ -1,3 +1,4 @@
+// Package validation provides utilities for validating user input in the FITS backend application.
 package validation
 
 import (

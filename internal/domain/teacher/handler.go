@@ -1,3 +1,4 @@
+// Package teacher provides handlers and services for teacher management.
 package teacher
 
 import (
