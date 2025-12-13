@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// SecretAuth creates a middleware that validates Bearer token authentication using a shared secret.
 func SecretAuth(expectedSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -34,18 +35,22 @@ func SecretAuth(expectedSecret string) fiber.Handler {
 	}
 }
 
+// MetricsAuth creates a middleware that validates authentication for metrics endpoints.
 func MetricsAuth(secret string) fiber.Handler {
 	return SecretAuth(secret)
 }
 
+// RegistrationAuth creates a middleware that validates authentication for registration endpoints.
 func RegistrationAuth(secret string) fiber.Handler {
 	return SecretAuth(secret)
 }
 
+// DeletionAuth creates a middleware that validates authentication for deletion endpoints.
 func DeletionAuth(secret string) fiber.Handler {
 	return SecretAuth(secret)
 }
 
+// UpdateAuth creates a middleware that validates authentication for update endpoints.
 func UpdateAuth(secret string) fiber.Handler {
 	return SecretAuth(secret)
 }

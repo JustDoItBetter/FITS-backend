@@ -1,3 +1,4 @@
+// Package logger provides structured logging utilities using Zap for the FITS backend application.
 package logger
 
 import (

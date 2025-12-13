@@ -1,3 +1,4 @@
+// Package auth provides authentication and authorization services for the FITS backend.
 package auth
 
 import (

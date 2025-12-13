@@ -57,7 +57,7 @@ func (m *MockRepository) ListPaginated(ctx context.Context, params pagination.Pa
 	return args.Get(0).([]*Student), args.Get(1).(int64), args.Error(2)
 }
 
-func (m *MockRepository) WithDB(db *gorm.DB) Repository {
+func (m *MockRepository) WithDB(_ *gorm.DB) Repository {
 	return m
 }
 
@@ -116,7 +116,7 @@ func TestCreate(t *testing.T) {
 				LastName:  "Mustermann",
 				Email:     "max@example.com",
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{
@@ -126,7 +126,7 @@ func TestCreate(t *testing.T) {
 				LastName:  "",
 				Email:     "max@example.com",
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{
@@ -136,7 +136,7 @@ func TestCreate(t *testing.T) {
 				LastName:  "Mustermann",
 				Email:     "invalid-email",
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{
@@ -146,7 +146,7 @@ func TestCreate(t *testing.T) {
 				LastName:  "Mustermann",
 				Email:     "max@example.com",
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{
@@ -313,7 +313,7 @@ func TestUpdate(t *testing.T) {
 			request: &UpdateStudentRequest{
 				Email: "invalid-email",
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{
@@ -322,7 +322,7 @@ func TestUpdate(t *testing.T) {
 			request: &UpdateStudentRequest{
 				FirstName: string(make([]byte, 101)),
 			},
-			setupMock:   func(m *MockRepository) {},
+			setupMock:   func(_ *MockRepository) {},
 			expectError: true,
 		},
 		{

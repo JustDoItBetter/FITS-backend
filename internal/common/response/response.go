@@ -1,3 +1,4 @@
+// Package response provides utilities for creating standardized HTTP responses in the FITS backend API.
 package response
 
 import (

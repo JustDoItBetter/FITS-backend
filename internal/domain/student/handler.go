@@ -1,3 +1,4 @@
+// Package student provides handlers and services for student management.
 package student
 
 import (

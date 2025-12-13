@@ -1,3 +1,4 @@
+// Package pagination provides utilities for handling paginated API responses.
 package pagination
 
 import (

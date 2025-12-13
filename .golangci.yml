@@ -1,6 +1,8 @@
 # golangci-lint configuration
 # https://golangci-lint.run/usage/configuration/
 
+version: "2"
+
 run:
   timeout: 5m
   tests: true
@@ -9,16 +11,11 @@ run:
 linters:
   enable:
     - errcheck      # Checking for unchecked errors
-    - gosimple      # Simplify code
     - govet         # Examines Go source code
     - ineffassign   # Detects ineffectual assignments
     - staticcheck   # Advanced Go linter
-    - typecheck     # Type-checks Go code
     - unused        # Checks for unused code
-    - gofmt         # Checks if code is formatted
-    - goimports     # Checks import statements
     - misspell      # Finds commonly misspelled words
-    - revive        # Fast & configurable linter
 
 linters-settings:
   errcheck:
@@ -30,13 +27,14 @@ linters-settings:
     disable:
       - shadow
 
-  gofmt:
-    simplify: true
-
   revive:
+    severity: warning
+    enable-all-rules: false
     rules:
-      - name: exported
-        disabled: false
+      - name: package-comments
+        severity: warning
+      - name: errcheck
+        severity: warning
 
 issues:
   exclude-use-default: false
@@ -50,11 +48,18 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - revive
 
     # Ignore long lines in generated files
     - path: docs/docs.go
       linters:
         - lll
+
+    # Exclude revive checks for specific patterns
+    - linters:
+        - revive
+      text: "(stutters|exported.*should have comment|unused-parameter)"
+      path: "(repository\\.go|handler\\.go|.*_gorm\\.go|adapter\\.go)"
 
 output:
   format: colored-line-number

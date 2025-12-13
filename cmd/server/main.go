@@ -1,3 +1,4 @@
+// Package main is the entry point for the FITS backend server application.
 package main
 
 import (
@@ -64,7 +65,11 @@ func main() {
 	if err := logger.Init(cfg.Logging.Level, cfg.Logging.Format); err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
-	defer logger.Sync() // Flush buffered logs before shutdown
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Printf("Failed to sync logger: %v", err)
+		}
+	}() // Flush buffered logs before shutdown
 
 	logger.Info("FITS Backend starting up",
 		zap.String("version", "1.0.0"),
@@ -77,7 +82,11 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("Failed to close database connection", zap.Error(err))
+		}
+	}()
 
 	logger.Info("Database connected successfully",
 		zap.String("host", cfg.Database.Host),

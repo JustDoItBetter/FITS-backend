@@ -12,18 +12,25 @@ import (
 type TokenType string
 
 const (
-	TokenTypeAccess     TokenType = "access"
-	TokenTypeRefresh    TokenType = "refresh"
+	// TokenTypeAccess represents an access token for API authentication.
+	TokenTypeAccess TokenType = "access"
+	// TokenTypeRefresh represents a refresh token for obtaining new access tokens.
+	TokenTypeRefresh TokenType = "refresh"
+	// TokenTypeInvitation represents an invitation token for user registration.
 	TokenTypeInvitation TokenType = "invitation"
-	TokenTypeAdmin      TokenType = "admin"
+	// TokenTypeAdmin represents an admin token with elevated privileges.
+	TokenTypeAdmin TokenType = "admin"
 )
 
 // Role represents a user role
 type Role string
 
 const (
-	RoleAdmin   Role = "admin"
+	// RoleAdmin represents an administrator user with full system access.
+	RoleAdmin Role = "admin"
+	// RoleTeacher represents a teacher user with access to teacher resources.
 	RoleTeacher Role = "teacher"
+	// RoleStudent represents a student user with limited access.
 	RoleStudent Role = "student"
 )
 
